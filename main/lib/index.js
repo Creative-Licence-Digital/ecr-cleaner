@@ -158,12 +158,15 @@ exports.filterOutActiveImages = function (eligibleForDeletion) {
 // Filter out everything newer than some variable amount of days
 //   set via REPO_AGE_THRESHOLD (90 days by default)
 exports.filterImagesByDateThreshold = function (images) {
-  console.info('IMAGES TO PROCESS:', images);
+  //console.info('IMAGES TO PROCESS:', images);
   var imageBatches = [];
 
   while (images.imageIds.length > 0) {
     imageBatches.push(images.imageIds.splice(0, 100));
   }
+  //imageBatches.push(images.imageIds.splice(0, 100));
+
+  console.log("number of batches", imageBatches.length);
   return Promise.mapSeries(imageBatches, function (imageBatch) {
     var params = {
       imageIds: imageBatch,
@@ -173,7 +176,8 @@ exports.filterImagesByDateThreshold = function (images) {
   }).then(function (imageDetails) {
     // Get all tags eligible for deletion by age threshold
     //   coerce each of the tags to a full image reference for easy comparison
-    var eligibleForDeletion = _.map(imageDetails.images, function (image) {
+    var allImages = _.flatten(_.map(imageDetails, function(batch) { return batch.images; }));
+    var eligibleForDeletion = _.map(allImages, function (image) {
 
       var created = JSON.parse(JSON.parse(image.imageManifest)
         .history[0]
